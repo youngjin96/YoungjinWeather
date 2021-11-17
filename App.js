@@ -18,14 +18,14 @@ const icons = {
   "Rain" : "rains",
 }
 
-// ScrollView는 style이 안 먹힌다. -> contentContainerStyle을 사용한다.
 export default function App() {
   // 유저 위치 정보 얻기
   const [ city, setCity ] = useState("Loading..");
   const [ days, setDays ] = useState([]);
   const [ ok, setOk ] = useState(true);
+
   const getWeather = async() => {
-    // 사용자 허용
+    // 사용자 위치 허용
     const { granted } = await Location.requestForegroundPermissionsAsync();
     if(!granted){
       setOk(false);
@@ -34,6 +34,7 @@ export default function App() {
     const {coords: { latitude, longitude }} = await Location.getCurrentPositionAsync({ accuracy: 5 });
     // reverseGeocodeAsync : 위도와 경도를 가져와 사람이 알 수 있는 주소로 바꿔준다.
     const location = await Location.reverseGeocodeAsync({ latitude, longitude }, { useGoogleMaps: false});
+    // xx구
     setCity(location[0].city);
     // API call
     const response = await fetch(
@@ -42,15 +43,20 @@ export default function App() {
     const json = await response.json();
     setDays(json.daily);
   };
+  // 컴포넌트가 렌더링 될 때 한 번만 getWeather() 실행
   useEffect(() => {
     getWeather();
-  }, [])
+  }, []);
+
   return (
     <View style={ styles.container }>
+      {/* 상태표시창 : 시계, 배터리, 와이파이 */}
       <StatusBar style="light"></StatusBar>
+      {/* 지역 이름 */}
       <View style={ styles.city }>
-        <Text style={ styles.cityName }>{city}</Text>
+        <Text style={ styles.cityName }>{ city }</Text>
       </View>
+      {/* ScrollView는 style이 안 먹힌다. -> contentContainerStyle을 사용한다. */}
       <ScrollView 
         horizontal 
         pagingEnabled
@@ -58,13 +64,16 @@ export default function App() {
         contentContainerStyle={ styles.weather }
       >
         {days.length === 0 ? (
+        /* days에 데이터가 없다면 로딩 로고 */
         <View style= { styles.day }>
           <ActivityIndicator color="white" size="large" style={{ marginTop: 10 }}/>
         </View>
         ) : (
+          /* days에 데이터 있으면 온도, 날씨, 날씨로고 */
           days.map((day, index) => 
           <View key={ index } style= { styles.day }>
             <View style={{ flexDirection: "row", alignItems: "center", width: "100%", justifyContent: "space-between" }}>
+              {/* 소수점 한자리까지 표현 */}
               <Text style={ styles.temperature }>{ parseFloat(day.temp.day).toFixed(1) }</Text>
               <Fontisto name={ icons[day.weather[0].main] } size={ 68 } color="white" />
             </View>
